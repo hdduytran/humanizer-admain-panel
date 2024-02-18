@@ -1,0 +1,14 @@
+credentials:
+  usernames:
+    admin:
+      email: jsmith@gmail.com
+      logged_in: False # Will be managed automatically
+      name: John Smith
+      password: admin # Will be hashed automatically
+cookie:
+  expiry_days: 30
+  key: some_signature_key # Must be string
+  name: some_cookie_name
+preauthorized:
+  emails:
+  - melsby@gmail.com
