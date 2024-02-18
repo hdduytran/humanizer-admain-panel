@@ -59,27 +59,29 @@ authenticator.login()
 if st.session_state["authentication_status"]:
     authenticator.logout()
     st.write('# Create a new user')
-    username = st.text_input('Enter username')
+    usernames = st.text_input('Enter username')
     if st.button('Create user'):
+        usernames = usernames.split(' ')
+        for username in usernames:
+            username = username.strip()
+            if get_user(username):
+                user = {
+                    "username": username,   
+                    "active": True,
+                    'updated_time': datetime.now()
+                }
+                update_user(username, user)
+                st.write(f'User {username} already exists, updated user')
+            else:
+                user = {
+                    'username': username,
+                    "active": True,
+                    'created_time': datetime.now(),
+                    'updated_time': datetime.now()
+                }
 
-        if get_user(username):
-            user = {
-                "username": username,   
-                "active": True,
-                'updated_time': datetime.now()
-            }
-            update_user(username, user)
-            st.write('User already exists, updated user')
-        else:
-            user = {
-                'username': username,
-                "active": True,
-                'created_time': datetime.now(),
-                'updated_time': datetime.now()
-            }
-
-            create_user(user)
-            st.write('User created successfully')
+                create_user(user)
+                st.write(f'User {username} created successfully')
             
     st.write('# All users')
     users = list(get_users())
