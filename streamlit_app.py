@@ -45,7 +45,8 @@ st.write('Welcome to Humanizer')
 
 with open('./config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
-
+print(config)
+config['credentials']['usernames']["admin"]["password"] = os.getenv("ADMIN-PASSWORD")
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
@@ -55,49 +56,52 @@ authenticator = stauth.Authenticate(
 )
 
 authenticator.login()
+if st.session_state["authentication_status"]:
+    authenticator.logout()
+    st.write('# Create a new user')
+    username = st.text_input('Enter username')
+    if st.button('Create user'):
 
-# user schema
-# {username: string, created_time: datetime, updated_time: datetime}
+        if get_user(username):
+            user = {
+                "username": username,   
+                "active": True,
+                'updated_time': datetime.now()
+            }
+            update_user(username, user)
+            st.write('User already exists, updated user')
+        else:
+            user = {
+                'username': username,
+                "active": True,
+                'created_time': datetime.now(),
+                'updated_time': datetime.now()
+            }
 
-st.write('# Create a new user')
-username = st.text_input('Enter username')
-if st.button('Create user'):
-
-    if get_user(username):
-        user = {
-            "username": username,   
-            "active": True,
-            'updated_time': datetime.now()
-        }
-        update_user(username, user)
-        st.write('User already exists, updated user')
-    else:
-        user = {
-            'username': username,
-            "active": True,
-            'created_time': datetime.now(),
-            'updated_time': datetime.now()
-        }
-
-        create_user(user)
-        st.write('User created successfully')
-        
-st.write('# All users')
-users = list(get_users())
-if not users:
-    st.write('No users found')
-else:
-    df = pd.DataFrame(users)
-    df = df.drop(columns=['_id'])
-
-    # remove users
-    remove_user_list = st.multiselect('Select users to remove', list(df['username']))
-    if st.button('Remove users'):
-        for user in remove_user_list:
-            update_user(user, {'active': False, 'updated_time': datetime.now()})
-            st.write(f'{user} removed successfully')
+            create_user(user)
+            st.write('User created successfully')
             
-        users = list(get_users())
+    st.write('# All users')
+    users = list(get_users())
+    if not users:
+        st.write('No users found')
+    else:
         df = pd.DataFrame(users)
         df = df.drop(columns=['_id'])
-    st.dataframe(df)
+
+        # remove users
+        remove_user_list = st.multiselect('Select users to remove', list(df['username']))
+        if st.button('Remove users'):
+            for user in remove_user_list:
+                update_user(user, {'active': False, 'updated_time': datetime.now()})
+                st.write(f'{user} removed successfully')
+                
+            users = list(get_users())
+            df = pd.DataFrame(users)
+            df = df.drop(columns=['_id'])
+        st.dataframe(df)
+        
+elif st.session_state["authentication_status"] is False:
+    st.error('Username/password is incorrect')
+elif st.session_state["authentication_status"] is None:
+    st.warning('Please enter your username and password')
