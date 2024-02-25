@@ -17,7 +17,7 @@ def init_connection():
 client = init_connection()
 
 # Select the database
-db = client["Humanizer"]
+db = client["Turnitin"]
 col_users = db["users"]
 
 # Create a new user
@@ -40,14 +40,14 @@ def update_user(username, user):
     col_users.update_one({'username': username}, {'$set': user}, upsert=True)
 
 # streamlit app
-# st.title('Humanizer')
+# st.title('Turnitin')
 
 # st.set_page_config(
-#     page_title="Humanizer",
-#     page_icon="👨‍🦰",
+#     page_title="Turnitin",
+#     page_icon="🤖",
 # )
 
-st.write('Welcome to Humanizer')
+st.write('Welcome to Turnitin')
 
 with open('./config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
