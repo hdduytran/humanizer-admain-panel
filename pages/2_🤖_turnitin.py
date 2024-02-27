@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import streamlit as st
 import pandas as pd
 import pymongo
@@ -67,8 +67,8 @@ if st.session_state["authentication_status"]:
     st.write('# Create a new user')
     usernames = st.text_input('Enter username')
     interval_time = st.number_input('Enter interval time', min_value=30, max_value=3600, value=300, step=30)
+    usernames = usernames.split(' ')
     if st.button('Create user'):
-        usernames = usernames.split(' ')
         for username in usernames:
             username = username.strip()
             if get_user(username):
@@ -76,6 +76,7 @@ if st.session_state["authentication_status"]:
                     "username": username,   
                     "active": True,
                     'updated_time': datetime.now(),
+                    'expiry_date': datetime.now() + timedelta(days=30), # 30 days from now
                     'interval_time': interval_time
                 }
                 update_user(username, user)
@@ -86,6 +87,7 @@ if st.session_state["authentication_status"]:
                     "active": True,
                     'created_time': datetime.now(),
                     'updated_time': datetime.now(),
+                    'expiry_date': datetime.now() + timedelta(days=30), # 30 days from now
                     'interval_time': interval_time
                 }
 
