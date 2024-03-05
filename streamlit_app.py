@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
+COLUMNS = ["user_id", "total_used", "interval_time", "created_time", "expiry_date", "last_used", "level", "active"]
+
 # Connect to MongoDB
 @st.cache_resource
 def init_connection():
@@ -122,6 +124,11 @@ if st.session_state["authentication_status"]:
             df = pd.DataFrame(users)
             if "_id" in df.columns:
                 df = df.drop(columns=['_id'])
+        
+        # reordering columns
+        df = df[COLUMNS]
+        # covert last_used to datetime
+        df['last_used'] = pd.to_datetime(df['last_used'])
         st.dataframe(df)
         
 elif st.session_state["authentication_status"] is False:
