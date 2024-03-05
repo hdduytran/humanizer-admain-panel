@@ -127,8 +127,8 @@ if st.session_state["authentication_status"]:
         
         # reordering columns
         df = df[COLUMNS]
-        # covert last_used to datetime
-        df['last_used'] = pd.to_datetime(df['last_used'])
+        # covert last_used  from timestamp to datetime
+        df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
         st.dataframe(df)
         
 elif st.session_state["authentication_status"] is False:
