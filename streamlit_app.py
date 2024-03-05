@@ -134,6 +134,8 @@ if st.session_state["authentication_status"]:
         target_timezone = timezone('Africa/Nairobi')
         df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
         df['last_used'] = df['last_used'].dt.tz_localize('UTC').dt.tz_convert(target_timezone)
+        df['created_time'] = df['created_time'].dt.tz_localize('UTC').dt.tz_convert(target_timezone)
+        df['expiry_date'] = df['expiry_date'].dt.tz_localize('UTC').dt.tz_convert(target_timezone)
         st.dataframe(df)
         
 elif st.session_state["authentication_status"] is False:
