@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import streamlit as st
 import pandas as pd
 import pymongo
@@ -33,18 +33,18 @@ def get_users():
     return col_users.find({"active":True}, sort=[("updated_time", pymongo.ASCENDING)])
 
 
-def get_user(username):
-    return col_users.find_one({'username': username})
+def get_user(user_id):
+    return col_users.find_one({'user_id': user_id})
 
-def update_user(username, user):
-    col_users.update_one({'username': username}, {'$set': user}, upsert=True)
+def update_user(user_id, user):
+    col_users.update_one({'user_id': user_id}, {'$set': user}, upsert=True)
 
 # streamlit app
-# st.title('Humanizer')
+# st.title('Turnitin')
 
 # st.set_page_config(
-#     page_title="Humanizer",
-#     page_icon="👨‍🦰",
+#     page_title="Turnitin",
+#     page_icon="🤖",
 # )
 
 st.write('Welcome to Humanizer')
@@ -65,29 +65,43 @@ authenticator.login()
 if st.session_state["authentication_status"]:
     authenticator.logout()
     st.write('# Create a new user')
-    usernames = st.text_input('Enter username')
+    user_ids = st.text_input('Enter user_id')
+    interval_time = st.number_input('Enter interval time', min_value=30, max_value=3600, value=60, step=30)
+    user_ids = user_ids.split(' ')
     if st.button('Create user'):
-        usernames = usernames.split(' ')
-        for username in usernames:
-            username = username.strip()
-            if get_user(username):
+        for user_id in user_ids:
+            user_id = user_id.strip()
+            if get_user(user_id):
                 user = {
-                    "username": username,   
+                    "user_id": user_id,   
                     "active": True,
-                    'updated_time': datetime.now()
+                    'updated_time': datetime.now(),
+                    'expiry_date': datetime.now() + timedelta(days=30), # 30 days from now
+                    'interval_time': interval_time
                 }
-                update_user(username, user)
-                st.write(f'User {username} already exists, updated user')
+                update_user(user_id, user)
+                st.write(f'User {user_id} already exists, updated user')
             else:
                 user = {
-                    'username': username,
+                    'user_id': user_id,
                     "active": True,
                     'created_time': datetime.now(),
-                    'updated_time': datetime.now()
+                    'updated_time': datetime.now(),
+                    'expiry_date': datetime.now() + timedelta(days=30), # 30 days from now
+                    'interval_time': interval_time
                 }
 
                 create_user(user)
-                st.write(f'User {username} created successfully')
+                st.write(f'User {user_id} created successfully')
+    if st.button("Update Interval Time"):
+        for user_id in user_ids:
+            user_id = user_id.strip()
+            user = {
+                'interval_time': interval_time,
+                'updated_time': datetime.now()
+            }
+            update_user(user_id, user)
+            st.write(f'User {user_id} updated successfully')
             
     st.write('# All users')
     users = list(get_users())
@@ -98,7 +112,7 @@ if st.session_state["authentication_status"]:
         df = df.drop(columns=['_id'])
 
         # remove users
-        remove_user_list = st.multiselect('Select users to remove', list(df['username']))
+        remove_user_list = st.multiselect('Select users to remove', list(df['user_id']))
         if st.button('Remove users'):
             for user in remove_user_list:
                 update_user(user, {'active': False, 'updated_time': datetime.now()})
@@ -111,6 +125,6 @@ if st.session_state["authentication_status"]:
         st.dataframe(df)
         
 elif st.session_state["authentication_status"] is False:
-    st.error('Username/password is incorrect')
+    st.error('username/password is incorrect')
 elif st.session_state["authentication_status"] is None:
     st.warning('Please enter your username and password')
