@@ -2,3 +2,4 @@ pymongo
 pandas
 streamlit-authenticator
 python-dotenv
+pytz

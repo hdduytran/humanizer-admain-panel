@@ -4,6 +4,8 @@ import pandas as pd
 import pymongo
 import streamlit_authenticator as stauth
 
+from pytz import timezone
+
 import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
@@ -128,7 +130,10 @@ if st.session_state["authentication_status"]:
         # reordering columns
         df = df[COLUMNS]
         # covert last_used  from timestamp to datetime
+        # timezone: EAT
+        target_timezone = timezone('Africa/Nairobi')
         df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
+        df['last_used'] = df['last_used'].dt.tz_localize('UTC').dt.tz_convert(target_timezone)
         st.dataframe(df)
         
 elif st.session_state["authentication_status"] is False:
