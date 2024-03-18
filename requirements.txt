@@ -3,3 +3,4 @@ pandas
 streamlit-authenticator
 python-dotenv
 pytz
+python-telegram-bot==20.4
