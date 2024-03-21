@@ -14,7 +14,10 @@ class TelegramHandler():
         asyncio.get_event_loop().run_until_complete(self.bot.send_message(chat_id=user_id, text=message))
         
     async def __notify(self, user_id, message):
-        await self.bot.send_message(chat_id=user_id, text=message)
+        try:
+            await self.bot.send_message(chat_id=user_id, text=message)
+        except Exception as e:
+            print(e)
         
     async def _notify_all(self, message, user_ids):
         for user in user_ids:
