@@ -8,7 +8,7 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 from telegram_handler import TelegramHandler
 
 from pytz import timezone
-
+import time
 import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
@@ -39,7 +39,10 @@ def create_user(user):
 
 
 def get_users():
-    return col_users.find({"active": True}, sort=[("updated_time", pymongo.ASCENDING)])
+    current_time = datetime.now()
+    return col_users.find({"active": True,
+                           "expiry_date": {"$gte": current_time},
+                           }, sort=[("updated_time", pymongo.ASCENDING)])
 
 
 def get_user(user_id):
@@ -69,52 +72,65 @@ authenticator.login()
 if st.session_state["authentication_status"]:
     authenticator.logout()
     # Toggle
-    st.markdown("# Send message to all users")
-    message = st.text_area('Enter message')
-    if st.button('Send message'):
-        user_ids = [user['user_id'] for user in get_users()]
-        telegram_handler.notify_all(message, user_ids)
-        st.write('Message sent successfully')
+    with st.expander("# Send message to all user"):
+        st.markdown("# Send message to all users")
+        message = st.text_area('Enter message')
+        if st.button('Send message'):
+            user_ids = [user['user_id'] for user in get_users()]
+            telegram_handler.notify_all(message, user_ids)
+            st.write('Message sent successfully')
         
     st.write('# Create a new user')
     user_ids = st.text_input('Enter user_id')
-    interval_time = st.number_input(
-        'Enter interval time', min_value=30, max_value=3600, value=60, step=30)
+    
+    cols1 = st.columns(2)
+    with cols1[0]:
+        expiry_date = st.date_input('Enter expiry date (default: 30)', datetime.now() + timedelta(days=30))
+        # convert datetime.date to datetime
+        expiry_date = datetime.combine(expiry_date, datetime.min.time())
+    with cols1[1]:
+        interval_time = st.number_input(
+            'Enter interval time', min_value=30, max_value=3600, value=300, step=30)
     user_ids = user_ids.split(' ')
-    if st.button('Create user'):
-        for user_id in user_ids:
-            user_id = user_id.strip()
-            if get_user(user_id):
+    
+    cols = st.columns(2)
+    
+    with cols[0]:
+        if st.button('Create/Update user'):
+            for user_id in user_ids:
+                user_id = user_id.strip()
+                if get_user(user_id):
+                    user = {
+                        "user_id": user_id,
+                        "active": True,
+                        'updated_time': datetime.now(),
+                        'expiry_date': expiry_date,
+                        'interval_time': interval_time
+                    }
+                    update_user(user_id, user)
+                    st.write(f'User {user_id} already exists, updated user')
+                else:
+                    user = {
+                        'user_id': user_id,
+                        "active": True,
+                        'created_time': datetime.now(),
+                        'updated_time': datetime.now(),
+                        'expiry_date': expiry_date,
+                        'interval_time': interval_time
+                    }
+
+                    create_user(user)
+                    st.write(f'User {user_id} created successfully')
+    with cols[1]:         
+        if st.button("Update Interval Time"):
+            for user_id in user_ids:
+                user_id = user_id.strip()
                 user = {
-                    "user_id": user_id,
-                    "active": True,
-                    'updated_time': datetime.now(),
-                    'expiry_date': datetime.now() + timedelta(days=30),  # 30 days from now
-                    'interval_time': interval_time
+                    'interval_time': interval_time,
+                    'updated_time': datetime.now()
                 }
                 update_user(user_id, user)
-                st.write(f'User {user_id} already exists, updated user')
-            else:
-                user = {
-                    'user_id': user_id,
-                    "active": True,
-                    'created_time': datetime.now(),
-                    'updated_time': datetime.now(),
-                    'expiry_date': datetime.now() + timedelta(days=30),  # 30 days from now
-                    'interval_time': interval_time
-                }
-
-                create_user(user)
-                st.write(f'User {user_id} created successfully')
-    if st.button("Update Interval Time"):
-        for user_id in user_ids:
-            user_id = user_id.strip()
-            user = {
-                'interval_time': interval_time,
-                'updated_time': datetime.now()
-            }
-            update_user(user_id, user)
-            st.write(f'User {user_id} updated successfully')
+                st.write(f'User {user_id} updated successfully')
 
     st.write('# All users')
     users = list(get_users())
@@ -139,6 +155,10 @@ if st.session_state["authentication_status"]:
                 df = df.drop(columns=['_id'])
 
         # reordering columns
+        # add columns if not exist
+        for column in COLUMNS:
+            if column not in df.columns:
+                df[column] = None
         df = df[COLUMNS]
         # covert last_used  from timestamp to datetime
         # timezone: EAT
