@@ -38,8 +38,12 @@ def create_user(user):
     col_users.insert_one(user)
 
 
+
 def get_users():
-    return col_users.find({"active": True}, sort=[("updated_time", pymongo.ASCENDING)])
+    current_time = datetime.now()
+    return col_users.find({"active": True,
+                           "expiry_date": {"$gte": current_time},
+                           }, sort=[("updated_time", pymongo.ASCENDING)])
 
 
 def get_user(user_id):
