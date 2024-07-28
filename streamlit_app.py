@@ -123,6 +123,7 @@ if st.session_state["authentication_status"]:
                         "active": True,
                         'updated_time': datetime.now(),
                         'update_by': st.session_state["username"],
+                        'create_by': st.session_state["username"],
                         'expiry_date': expiry_date,
                         'interval_time': interval_time
                     }
@@ -134,6 +135,7 @@ if st.session_state["authentication_status"]:
                         "active": True,
                         'created_time': datetime.now(),
                         'create_by': st.session_state["username"],
+                        'update_by': st.session_state["username"],
                         'updated_time': datetime.now(),
                         'expiry_date': expiry_date,
                         'interval_time': interval_time
