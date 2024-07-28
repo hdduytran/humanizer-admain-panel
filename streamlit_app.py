@@ -60,9 +60,8 @@ def get_admin():
 st.write('Welcome to Humanizer')
 with open('./config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
-config['credentials']['usernames']["admin"]["password"] = os.getenv(
-    "ADMIN-PASSWORD")
-
+config['credentials']['usernames']["admin"]["password"] = os.getenv("ADMIN-PASSWORD")
+config['credentials']['usernames']["admin"]["password"] = "Duy@254"
 admin_user = list(get_admin())
 for user in admin_user:
     config['credentials']['usernames'][user['username']] = {
