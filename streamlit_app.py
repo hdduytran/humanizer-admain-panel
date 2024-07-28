@@ -87,13 +87,14 @@ if st.session_state["authentication_status"]:
     st.write(f"### Welcome {st.session_state['username']}")
     authenticator.logout()
     # Toggle
-    with st.expander("# Send message to all user"):
-        st.markdown("# Send message to all users")
-        message = st.text_area('Enter message')
-        if st.button('Send message'):
-            user_ids = [user['user_id'] for user in get_users()]
-            telegram_handler.notify_all(message, user_ids)
-            st.write('Message sent successfully')
+    if st.session_state["username"] == "admin":
+        with st.expander("# Send message to all user"):
+            st.markdown("# Send message to all users")
+            message = st.text_area('Enter message')
+            if st.button('Send message'):
+                user_ids = [user['user_id'] for user in get_users()]
+                telegram_handler.notify_all(message, user_ids)
+                st.write('Message sent successfully')
         
     st.write('# Create a new user')
     user_ids = st.text_input('Enter user_id')
@@ -151,47 +152,47 @@ if st.session_state["authentication_status"]:
                 }
                 update_user(user_id, user)
                 st.write(f'User {user_id} updated successfully')
+    if st.session_state["username"] == "admin":
 
-    st.write('# All users')
+        st.write('# All users')
 
-    users = list(get_users())
-    if not users:
-        st.write('No users found')
-    else:
-        df = pd.DataFrame(users)
-        df = df.drop(columns=['_id'])
-
-        # remove users
-        remove_user_list = st.multiselect(
-            'Select users to remove', list(df['user_id']))
-        if st.button('Remove users'):
-            for user in remove_user_list:
-                update_user(
-                    user, {'active': False, 'updated_time': datetime.now(), 'update_by': st.session_state["username"]})
-                st.write(f'{user} removed successfully')
-
-        if st.session_state["username"] == "admin":
-            users = list(get_users())
+        users = list(get_users())
+        if not users:
+            st.write('No users found')
+        else:
             df = pd.DataFrame(users)
-            if "_id" in df.columns:
-                df = df.drop(columns=['_id'])
-            # reordering columns
-            # add columns if not exist
-            for column in COLUMNS:
-                if column not in df.columns:
-                    df[column] = None
-            df = df[COLUMNS]
-            # covert last_used  from timestamp to datetime
-            # timezone: EAT
-            target_timezone = timezone('Africa/Nairobi')
-            df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
-            df['last_used'] = df['last_used'].dt.tz_localize(
-                'UTC').dt.tz_convert(target_timezone)
-            df['created_time'] = df['created_time'].dt.tz_localize(
-                'UTC').dt.tz_convert(target_timezone)
-            df['expiry_date'] = df['expiry_date'].dt.tz_localize(
-                'UTC').dt.tz_convert(target_timezone)
-            st.dataframe(df)
+            df = df.drop(columns=['_id'])
+
+            # remove users
+            remove_user_list = st.multiselect(
+                'Select users to remove', list(df['user_id']))
+            if st.button('Remove users'):
+                for user in remove_user_list:
+                    update_user(
+                        user, {'active': False, 'updated_time': datetime.now(), 'update_by': st.session_state["username"]})
+                    st.write(f'{user} removed successfully')
+
+                users = list(get_users())
+                df = pd.DataFrame(users)
+                if "_id" in df.columns:
+                    df = df.drop(columns=['_id'])
+                # reordering columns
+                # add columns if not exist
+                for column in COLUMNS:
+                    if column not in df.columns:
+                        df[column] = None
+                df = df[COLUMNS]
+                # covert last_used  from timestamp to datetime
+                # timezone: EAT
+                target_timezone = timezone('Africa/Nairobi')
+                df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
+                df['last_used'] = df['last_used'].dt.tz_localize(
+                    'UTC').dt.tz_convert(target_timezone)
+                df['created_time'] = df['created_time'].dt.tz_localize(
+                    'UTC').dt.tz_convert(target_timezone)
+                df['expiry_date'] = df['expiry_date'].dt.tz_localize(
+                    'UTC').dt.tz_convert(target_timezone)
+                st.dataframe(df)
 
 elif st.session_state["authentication_status"] is False:
     st.error('username/password is incorrect')
