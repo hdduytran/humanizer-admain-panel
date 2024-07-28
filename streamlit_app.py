@@ -174,27 +174,27 @@ if st.session_state["authentication_status"]:
                         user, {'active': False, 'updated_time': datetime.now(), 'update_by': st.session_state["username"]})
                     st.write(f'{user} removed successfully')
 
-                users = list(get_users())
-                df = pd.DataFrame(users)
-                if "_id" in df.columns:
-                    df = df.drop(columns=['_id'])
-                # reordering columns
-                # add columns if not exist
-                for column in COLUMNS:
-                    if column not in df.columns:
-                        df[column] = None
-                df = df[COLUMNS]
-                # covert last_used  from timestamp to datetime
-                # timezone: EAT
-                target_timezone = timezone('Africa/Nairobi')
-                df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
-                df['last_used'] = df['last_used'].dt.tz_localize(
-                    'UTC').dt.tz_convert(target_timezone)
-                df['created_time'] = df['created_time'].dt.tz_localize(
-                    'UTC').dt.tz_convert(target_timezone)
-                df['expiry_date'] = df['expiry_date'].dt.tz_localize(
-                    'UTC').dt.tz_convert(target_timezone)
-                st.dataframe(df)
+            users = list(get_users())
+            df = pd.DataFrame(users)
+            if "_id" in df.columns:
+                df = df.drop(columns=['_id'])
+            # reordering columns
+            # add columns if not exist
+            for column in COLUMNS:
+                if column not in df.columns:
+                    df[column] = None
+            df = df[COLUMNS]
+            # covert last_used  from timestamp to datetime
+            # timezone: EAT
+            target_timezone = timezone('Africa/Nairobi')
+            df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
+            df['last_used'] = df['last_used'].dt.tz_localize(
+                'UTC').dt.tz_convert(target_timezone)
+            df['created_time'] = df['created_time'].dt.tz_localize(
+                'UTC').dt.tz_convert(target_timezone)
+            df['expiry_date'] = df['expiry_date'].dt.tz_localize(
+                'UTC').dt.tz_convert(target_timezone)
+            st.dataframe(df)
 
 elif st.session_state["authentication_status"] is False:
     st.error('username/password is incorrect')
