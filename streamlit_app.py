@@ -121,8 +121,8 @@ if st.session_state["authentication_status"]:
                         "user_id": user_id,
                         "active": True,
                         'updated_time': datetime.now(),
-                        'update_by': st.session_state["username"],
-                        'create_by': st.session_state["username"],
+                        'updated_by': st.session_state["username"],
+                        'created_by': st.session_state["username"],
                         'expiry_date': expiry_date,
                         'interval_time': interval_time
                     }
@@ -133,8 +133,8 @@ if st.session_state["authentication_status"]:
                         'user_id': user_id,
                         "active": True,
                         'created_time': datetime.now(),
-                        'create_by': st.session_state["username"],
-                        'update_by': st.session_state["username"],
+                        'created_by': st.session_state["username"],
+                        'updated_by': st.session_state["username"],
                         'updated_time': datetime.now(),
                         'expiry_date': expiry_date,
                         'interval_time': interval_time
@@ -149,7 +149,7 @@ if st.session_state["authentication_status"]:
                 user = {
                     'interval_time': interval_time,
                     'updated_time': datetime.now(),
-                    'update_by': st.session_state["username"],
+                    'updated_by': st.session_state["username"],
                 }
                 update_user(user_id, user)
                 st.write(f'User {user_id} updated successfully')
@@ -170,7 +170,7 @@ if st.session_state["authentication_status"]:
             if st.button('Remove users'):
                 for user in remove_user_list:
                     update_user(
-                        user, {'active': False, 'updated_time': datetime.now(), 'update_by': st.session_state["username"]})
+                        user, {'active': False, 'updated_time': datetime.now(), 'updated_by': st.session_state["username"]})
                     st.write(f'{user} removed successfully')
 
             users = list(get_users())
