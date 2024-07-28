@@ -50,8 +50,8 @@ authenticator = stauth.Authenticate(
 )
 
 authenticator.login()
-authenticator.logout()
 if st.session_state["authentication_status"]:
+    authenticator.logout()
     if st.session_state["username"] != "admin":
         st.write("# You are not authorized to access this page.")
         st.stop()
