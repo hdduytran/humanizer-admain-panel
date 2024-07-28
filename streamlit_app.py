@@ -16,7 +16,8 @@ import os
 load_dotenv()
 
 COLUMNS = ["user_id", "total_used", "interval_time",
-           "created_time", "expiry_date", "last_used", "level", "active"]
+           "created_time", "expiry_date", 'created_by', 'updated_by',
+           "last_used", "level", "active"]
 
 # Connect to MongoDB
 
@@ -31,6 +32,7 @@ client = init_connection()
 # Select the database
 db = client["Humanizer"]
 col_users = db["users"]
+col_admin = db["admin"]
 telegram_handler = TelegramHandler(os.getenv("BOT_TOKEN_HUMANIZER"))
 
 
@@ -48,18 +50,30 @@ def get_users():
 def get_user(user_id):
     return col_users.find_one({'user_id': user_id})
 
-
 def update_user(user_id, user):
     col_users.update_one({'user_id': user_id}, {'$set': user}, upsert=True)
 
+def get_admin():
+    return col_admin.find({})
+
 
 st.write('Welcome to Humanizer')
-
 with open('./config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
-print(config)
 config['credentials']['usernames']["admin"]["password"] = os.getenv(
     "ADMIN-PASSWORD")
+
+admin_user = list(get_admin())
+for user in admin_user:
+    config['credentials']['usernames'][user['username']] = {
+        "password": user['password'],
+        "logged_in": False,
+        "email": "random@gmail.com",
+        "name": "random"
+    }    
+print(config)
+
+
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
@@ -70,6 +84,7 @@ authenticator = stauth.Authenticate(
 
 authenticator.login()
 if st.session_state["authentication_status"]:
+    st.write(f"### Welcome {st.session_state['username']}")
     authenticator.logout()
     # Toggle
     with st.expander("# Send message to all user"):
@@ -85,12 +100,14 @@ if st.session_state["authentication_status"]:
     
     cols1 = st.columns(2)
     with cols1[0]:
-        expiry_date = st.date_input('Enter expiry date (default: 30)', datetime.now() + timedelta(days=30))
+        options = {"1 day": timedelta(days=1), "1 week": timedelta(weeks=1), "2 weeks": timedelta(weeks=2), "1 month": timedelta(days=30)}
+        selected_option = st.selectbox('Choose expiry duration (From Now)', list(options.keys()))
+        expiry_date = datetime.now() + options[selected_option]
         # convert datetime.date to datetime
         expiry_date = datetime.combine(expiry_date, datetime.min.time())
     with cols1[1]:
         interval_time = st.number_input(
-            'Enter interval time', min_value=30, max_value=3600, value=300, step=30)
+            'Enter interval time', min_value=10, max_value=3600, value=100, step=10)
     user_ids = user_ids.split(' ')
     
     cols = st.columns(2)
@@ -104,6 +121,7 @@ if st.session_state["authentication_status"]:
                         "user_id": user_id,
                         "active": True,
                         'updated_time': datetime.now(),
+                        'update_by': st.session_state["username"],
                         'expiry_date': expiry_date,
                         'interval_time': interval_time
                     }
@@ -114,6 +132,7 @@ if st.session_state["authentication_status"]:
                         'user_id': user_id,
                         "active": True,
                         'created_time': datetime.now(),
+                        'create_by': st.session_state["username"],
                         'updated_time': datetime.now(),
                         'expiry_date': expiry_date,
                         'interval_time': interval_time
@@ -127,12 +146,14 @@ if st.session_state["authentication_status"]:
                 user_id = user_id.strip()
                 user = {
                     'interval_time': interval_time,
-                    'updated_time': datetime.now()
+                    'updated_time': datetime.now(),
+                    'update_by': st.session_state["username"],
                 }
                 update_user(user_id, user)
                 st.write(f'User {user_id} updated successfully')
 
     st.write('# All users')
+
     users = list(get_users())
     if not users:
         st.write('No users found')
@@ -146,31 +167,31 @@ if st.session_state["authentication_status"]:
         if st.button('Remove users'):
             for user in remove_user_list:
                 update_user(
-                    user, {'active': False, 'updated_time': datetime.now()})
+                    user, {'active': False, 'updated_time': datetime.now(), 'update_by': st.session_state["username"]})
                 st.write(f'{user} removed successfully')
 
+        if st.session_state["username"] == "admin":
             users = list(get_users())
             df = pd.DataFrame(users)
             if "_id" in df.columns:
                 df = df.drop(columns=['_id'])
-
-        # reordering columns
-        # add columns if not exist
-        for column in COLUMNS:
-            if column not in df.columns:
-                df[column] = None
-        df = df[COLUMNS]
-        # covert last_used  from timestamp to datetime
-        # timezone: EAT
-        target_timezone = timezone('Africa/Nairobi')
-        df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
-        df['last_used'] = df['last_used'].dt.tz_localize(
-            'UTC').dt.tz_convert(target_timezone)
-        df['created_time'] = df['created_time'].dt.tz_localize(
-            'UTC').dt.tz_convert(target_timezone)
-        df['expiry_date'] = df['expiry_date'].dt.tz_localize(
-            'UTC').dt.tz_convert(target_timezone)
-        st.dataframe(df)
+            # reordering columns
+            # add columns if not exist
+            for column in COLUMNS:
+                if column not in df.columns:
+                    df[column] = None
+            df = df[COLUMNS]
+            # covert last_used  from timestamp to datetime
+            # timezone: EAT
+            target_timezone = timezone('Africa/Nairobi')
+            df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
+            df['last_used'] = df['last_used'].dt.tz_localize(
+                'UTC').dt.tz_convert(target_timezone)
+            df['created_time'] = df['created_time'].dt.tz_localize(
+                'UTC').dt.tz_convert(target_timezone)
+            df['expiry_date'] = df['expiry_date'].dt.tz_localize(
+                'UTC').dt.tz_convert(target_timezone)
+            st.dataframe(df)
 
 elif st.session_state["authentication_status"] is False:
     st.error('username/password is incorrect')
