@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-COLUMNS = ["user_id", "total_used", "interval_time",
+COLUMNS = ["user_id", "total_used", "total_used_turnitin", "interval_time", 'max_turnitin_time',
            "created_time", "expiry_date", 'created_by', 'updated_by',
            "last_used", "level", "active"]
 
@@ -98,7 +98,7 @@ if st.session_state["authentication_status"]:
     st.write('# Create a new user')
     user_ids = st.text_input('Enter user_id')
     
-    cols1 = st.columns(2)
+    cols1 = st.columns(3)
     with cols1[0]:
         options = {"1 day": timedelta(days=1), "1 week": timedelta(weeks=1), "2 weeks": timedelta(weeks=2), "1 month": timedelta(days=30)}
         selected_option = st.selectbox('Choose expiry duration (From Now)', list(options.keys()))
@@ -108,9 +108,15 @@ if st.session_state["authentication_status"]:
     with cols1[1]:
         interval_time = st.number_input(
             'Enter interval time', min_value=10, max_value=3600, value=100, step=10)
+    with cols1[2]:
+        max_turnitin_time = st.number_input(
+            'Enter limit Turnitin time', min_value=1, max_value=3600, value=30, step=1)
+        
+        
+        
     user_ids = user_ids.split(' ')
     
-    cols = st.columns(2)
+    cols = st.columns(3)
     
     with cols[0]:
         if st.button('Create/Update user'):
@@ -124,7 +130,8 @@ if st.session_state["authentication_status"]:
                         'updated_by': st.session_state["username"],
                         'created_by': st.session_state["username"],
                         'expiry_date': expiry_date,
-                        'interval_time': interval_time
+                        'interval_time': interval_time,
+                        'max_turnitin_time': max_turnitin_time
                     }
                     update_user(user_id, user)
                     st.write(f'User {user_id} already exists, updated user')
@@ -137,7 +144,8 @@ if st.session_state["authentication_status"]:
                         'updated_by': st.session_state["username"],
                         'updated_time': datetime.now(),
                         'expiry_date': expiry_date,
-                        'interval_time': interval_time
+                        'interval_time': interval_time,
+                        'max_turnitin_time': max_turnitin_time
                     }
 
                     create_user(user)
@@ -153,6 +161,19 @@ if st.session_state["authentication_status"]:
                 }
                 update_user(user_id, user)
                 st.write(f'User {user_id} updated successfully')
+    with cols[2]:         
+        if st.button("Update Max Turnitin Time"):
+            for user_id in user_ids:
+                user_id = user_id.strip()
+                user = {
+                    'max_turnitin_time': interval_time,
+                    'updated_time': datetime.now(),
+                    'updated_by': st.session_state["username"],
+                }
+                update_user(user_id, user)
+                st.write(f'User {user_id} updated successfully')
+                
+                
     if st.session_state["username"] == "admin":
 
         st.write('# All users')
