@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+import numpy as np
 import streamlit as st
 import pandas as pd
 import pymongo
@@ -8,7 +9,6 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, Messa
 from telegram_handler import TelegramHandler
 
 from pytz import timezone
-import time
 import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
@@ -102,15 +102,15 @@ if st.session_state["authentication_status"]:
     with cols1[0]:
         options = {"1 day": timedelta(days=1), "1 week": timedelta(weeks=1), "2 weeks": timedelta(weeks=2), "1 month": timedelta(days=30)}
         selected_option = st.selectbox('Choose expiry duration (From Now)', list(options.keys()))
-        expiry_date = datetime.now() + options[selected_option]
+        expiry_date = datetime.now() + options[selected_option] 
         # convert datetime.date to datetime
-        expiry_date = datetime.combine(expiry_date, datetime.min.time())
+        expiry_date = datetime.combine(expiry_date - timedelta(days=1), time(21,0)) 
     with cols1[1]:
         interval_time = st.number_input(
             'Enter interval time', min_value=10, max_value=3600, value=100, step=10)
     with cols1[2]:
         max_turnitin_time = st.number_input(
-            'Enter limit Turnitin time', min_value=1, max_value=3600, value=30, step=1)
+            'Enter limit Turnitin time', min_value=0, max_value=3600, value=30, step=1)
         
         
         
@@ -166,7 +166,7 @@ if st.session_state["authentication_status"]:
             for user_id in user_ids:
                 user_id = user_id.strip()
                 user = {
-                    'max_turnitin_time': interval_time,
+                    'max_turnitin_time': max_turnitin_time,
                     'updated_time': datetime.now(),
                     'updated_by': st.session_state["username"],
                 }
@@ -206,6 +206,7 @@ if st.session_state["authentication_status"]:
             df = df[COLUMNS]
             # covert last_used  from timestamp to datetime
             # timezone: EAT
+            df['total_used_turnitin'] = np.minimum(df['total_used_turnitin'], df['max_turnitin_time'])
             target_timezone = timezone('Africa/Nairobi')
             df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
             df['last_used'] = df['last_used'].dt.tz_localize(
