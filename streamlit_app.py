@@ -33,6 +33,7 @@ client = init_connection()
 db = client["Humanizer"]
 col_users = db["users"]
 col_admin = db["admin"]
+col_turnitin_login = db["turnitin_login"]
 telegram_handler = TelegramHandler(os.getenv("BOT_TOKEN_HUMANIZER"))
 
 
@@ -94,6 +95,15 @@ if st.session_state["authentication_status"]:
                 user_ids = [user['user_id'] for user in get_users()]
                 telegram_handler.notify_all(message, user_ids)
                 st.write('Message sent successfully')
+                
+        with st.expander("# Change Turnitin login"):
+            st.markdown("# Change Turnitin login")
+            username = st.text_input('Enter username')
+            password = st.text_input('Enter password')
+            if st.button('Change Turnitin login'):
+                col_turnitin_login.update_one({}, {'$set': {'username': username, 'password': password}}, upsert=True)
+                st.write('Turnitin login changed successfully')
+                
         
     st.write('# Create a new user')
     user_ids = st.text_input('Enter user_id')
