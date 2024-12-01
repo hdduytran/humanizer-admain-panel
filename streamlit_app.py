@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, date
 import numpy as np
 import streamlit as st
 import pandas as pd
@@ -15,8 +15,8 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-COLUMNS = ["user_id", "total_used", "total_used_turnitin", "interval_time", 'max_turnitin_time',
-           "created_time", "expiry_date", 'created_by', 'updated_by',
+COLUMNS = ["user_id", "total_used", "total_used_turnitin", "interval_time", 'max_turnitin_time', "alow_turnitin_only",
+            "expiry_date", "created_time", 'created_by', 'updated_by',
            "last_used", "level", "active"]
 
 # Connect to MongoDB
@@ -110,17 +110,24 @@ if st.session_state["authentication_status"]:
     
     cols1 = st.columns(3)
     with cols1[0]:
-        options = {"1 day": timedelta(days=1), "1 week": timedelta(weeks=1), "2 weeks": timedelta(weeks=2), "1 month": timedelta(days=30)}
+        options = {"1 day": timedelta(days=1) + timedelta(days=1), "1 week": timedelta(weeks=1) + timedelta(days=1), "2 weeks": timedelta(weeks=2) + timedelta(days=1), "1 month": timedelta(days=31) + timedelta(days=1)}
         selected_option = st.selectbox('Choose expiry duration (From Now)', list(options.keys()))
-        expiry_date = datetime.now() + options[selected_option] 
+        
+        d = datetime.now() + options[selected_option] 
+        d = datetime.combine(d - timedelta(days=1), time(21,0)) 
+        expiry_date = st.date_input("Or choose an exact date", d)
+        expiry_date = datetime.combine(expiry_date, time(21,0))
+
+        
         # convert datetime.date to datetime
-        expiry_date = datetime.combine(expiry_date - timedelta(days=1), time(21,0)) 
     with cols1[1]:
         interval_time = st.number_input(
             'Enter interval time', min_value=10, max_value=3600, value=100, step=10)
     with cols1[2]:
         max_turnitin_time = st.number_input(
             'Enter limit Turnitin time', min_value=0, max_value=3600, value=30, step=1)
+        
+        is_only_turnitin = st.checkbox('Only Turnitin')
         
         
         
@@ -140,8 +147,9 @@ if st.session_state["authentication_status"]:
                         'updated_by': st.session_state["username"],
                         'created_by': st.session_state["username"],
                         'expiry_date': expiry_date,
+                        'alow_turnitin_only': is_only_turnitin,
                         'interval_time': interval_time,
-                        'max_turnitin_time': max_turnitin_time
+                        'max_turnitin_time': max_turnitin_time,
                     }
                     update_user(user_id, user)
                     st.write(f'User {user_id} already exists, updated user')
@@ -154,8 +162,10 @@ if st.session_state["authentication_status"]:
                         'updated_by': st.session_state["username"],
                         'updated_time': datetime.now(),
                         'expiry_date': expiry_date,
+                        'alow_turnitin_only': is_only_turnitin,
                         'interval_time': interval_time,
-                        'max_turnitin_time': max_turnitin_time
+                        'max_turnitin_time': max_turnitin_time,
+                        
                     }
 
                     create_user(user)
@@ -176,6 +186,7 @@ if st.session_state["authentication_status"]:
             for user_id in user_ids:
                 user_id = user_id.strip()
                 user = {
+                    'alow_turnitin_only': is_only_turnitin,
                     'max_turnitin_time': max_turnitin_time,
                     'updated_time': datetime.now(),
                     'updated_by': st.session_state["username"],
