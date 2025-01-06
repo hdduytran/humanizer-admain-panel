@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-COLUMNS = ["user_id", "total_used", "total_used_turnitin", "interval_time", 'max_turnitin_time', "alow_turnitin_only",
+COLUMNS = ["user_id", "total_used", "interval_time", 
             "expiry_date", "created_time", 'created_by', 'updated_by',
            "last_used", "level", "active"]
 
@@ -33,7 +33,6 @@ client = init_connection()
 db = client["Humanizer"]
 col_users = db["users"]
 col_admin = db["admin"]
-col_turnitin_login = db["turnitin_login"]
 telegram_handler = TelegramHandler(os.getenv("BOT_TOKEN_HUMANIZER"))
 
 
@@ -45,7 +44,9 @@ def get_users():
     current_time = datetime.now()
     return col_users.find({"active": True,
                            "expiry_date": {"$gte": current_time},
-                           }, sort=[("updated_time", pymongo.ASCENDING)])
+                           },
+                          projection=COLUMNS,
+                          sort=[("updated_time", pymongo.ASCENDING)])
 
 
 def get_user(user_id):
@@ -80,7 +81,7 @@ authenticator = stauth.Authenticate(
     config['cookie']['key'],
     config['cookie']['expiry_days'],
     config['preauthorized']
-)
+) 
 
 authenticator.login()
 if st.session_state["authentication_status"]:
@@ -96,19 +97,12 @@ if st.session_state["authentication_status"]:
                 telegram_handler.notify_all(message, user_ids)
                 st.write('Message sent successfully')
                 
-        with st.expander("# Change Turnitin login"):
-            st.markdown("# Change Turnitin login")
-            username = st.text_input('Enter username')
-            password = st.text_input('Enter password')
-            if st.button('Change Turnitin login'):
-                col_turnitin_login.update_one({}, {'$set': {'username': username, 'password': password}}, upsert=True)
-                st.write('Turnitin login changed successfully')
                 
         
     st.write('# Create a new user')
     user_ids = st.text_input('Enter user_id')
     
-    cols1 = st.columns(3)
+    cols1 = st.columns(2)
     with cols1[0]:
         options = {"1 day": timedelta(days=1) + timedelta(days=1), "1 week": timedelta(weeks=1) + timedelta(days=1), "2 weeks": timedelta(weeks=2) + timedelta(days=1), "1 month": timedelta(days=31) + timedelta(days=1)}
         selected_option = st.selectbox('Choose expiry duration (From Now)', list(options.keys()))
@@ -123,17 +117,10 @@ if st.session_state["authentication_status"]:
     with cols1[1]:
         interval_time = st.number_input(
             'Enter interval time', min_value=10, max_value=3600, value=100, step=10)
-    with cols1[2]:
-        max_turnitin_time = st.number_input(
-            'Enter limit Turnitin time', min_value=0, max_value=3600, value=30, step=1)
-        
-        is_only_turnitin = st.checkbox('Only Turnitin')
-        
-        
         
     user_ids = user_ids.split(' ')
     
-    cols = st.columns(3)
+    cols = st.columns(2)
     
     with cols[0]:
         if st.button('Create/Update user'):
@@ -147,9 +134,7 @@ if st.session_state["authentication_status"]:
                         'updated_by': st.session_state["username"],
                         'created_by': st.session_state["username"],
                         'expiry_date': expiry_date,
-                        'alow_turnitin_only': is_only_turnitin,
                         'interval_time': interval_time,
-                        'max_turnitin_time': max_turnitin_time,
                     }
                     update_user(user_id, user)
                     st.write(f'User {user_id} already exists, updated user')
@@ -162,9 +147,7 @@ if st.session_state["authentication_status"]:
                         'updated_by': st.session_state["username"],
                         'updated_time': datetime.now(),
                         'expiry_date': expiry_date,
-                        'alow_turnitin_only': is_only_turnitin,
                         'interval_time': interval_time,
-                        'max_turnitin_time': max_turnitin_time,
                         
                     }
 
@@ -176,18 +159,6 @@ if st.session_state["authentication_status"]:
                 user_id = user_id.strip()
                 user = {
                     'interval_time': interval_time,
-                    'updated_time': datetime.now(),
-                    'updated_by': st.session_state["username"],
-                }
-                update_user(user_id, user)
-                st.write(f'User {user_id} updated successfully')
-    with cols[2]:         
-        if st.button("Update Max Turnitin Time"):
-            for user_id in user_ids:
-                user_id = user_id.strip()
-                user = {
-                    'alow_turnitin_only': is_only_turnitin,
-                    'max_turnitin_time': max_turnitin_time,
                     'updated_time': datetime.now(),
                     'updated_by': st.session_state["username"],
                 }
@@ -227,7 +198,6 @@ if st.session_state["authentication_status"]:
             df = df[COLUMNS]
             # covert last_used  from timestamp to datetime
             # timezone: EAT
-            df['total_used_turnitin'] = np.minimum(df['total_used_turnitin'], df['max_turnitin_time'])
             target_timezone = timezone('Africa/Nairobi')
             df['last_used'] = pd.to_datetime(df['last_used'], unit='s')
             df['last_used'] = df['last_used'].dt.tz_localize(
