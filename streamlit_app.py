@@ -210,25 +210,24 @@ if st.session_state["authentication_status"]:
             df['expiry_date'] = df['expiry_date'].dt.tz_localize(
                 'UTC').dt.tz_convert(target_timezone)
             st.dataframe(df)
-    else:
-        st.markdown("# Delete/Block user")
-        user_ids = st.text_input('Enter user_id to delete/block')
-        user_ids = user_ids.split(' ')
-        cols = st.columns(2)
-        with cols[0]:
-            if st.button('Delete user'):
-                for user_id in user_ids:
-                    user_id = user_id.strip()
-                    update_user(
-                        user_id, {'active': False, 'updated_time': datetime.now(), 'updated_by': st.session_state["username"]})
-                    st.write(f'{user_id} deleted successfully')
-        with cols[1]:
-            if st.button('Block user'):
-                for user_id in user_ids:
-                    user_id = user_id.strip()
-                    update_user(
-                        user_id, {'active': False, 'updated_time': datetime.now(), 'updated_by': st.session_state["username"], "blocked": True})
-                    st.write(f'{user_id} blocked successfully')
+    st.markdown("# Delete/Block user")
+    user_ids = st.text_input('Enter user_id to delete/block')
+    user_ids = user_ids.split(' ')
+    cols = st.columns(2)
+    with cols[0]:
+        if st.button('Delete user'):
+            for user_id in user_ids:
+                user_id = user_id.strip()
+                update_user(
+                    user_id, {'active': False, 'updated_time': datetime.now(), 'updated_by': st.session_state["username"]})
+                st.write(f'{user_id} deleted successfully')
+    with cols[1]:
+        if st.button('Block user'):
+            for user_id in user_ids:
+                user_id = user_id.strip()
+                update_user(
+                    user_id, {'active': False, 'updated_time': datetime.now(), 'updated_by': st.session_state["username"], "blocked": True})
+                st.write(f'{user_id} blocked successfully')
 
 elif st.session_state["authentication_status"] is False:
     st.error('username/password is incorrect')
