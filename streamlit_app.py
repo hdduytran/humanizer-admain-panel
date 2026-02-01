@@ -129,6 +129,7 @@ if st.session_state["authentication_status"]:
     cols1 = st.columns(2)
     with cols1[0]:
         options = {
+            "3 hours": timedelta(hours=3),
             "0 days (slots plan)": timedelta(days=0) + timedelta(days=0),
             "1 day": timedelta(days=1) +     timedelta(days=1),
             "1 week": timedelta(weeks=1) + timedelta(days=1),
@@ -140,7 +141,8 @@ if st.session_state["authentication_status"]:
         )
 
         d = datetime.now() + options[selected_option]
-        d = datetime.combine(d - timedelta(days=1), time(21, 0))
+        if selected_option != "3 hours":
+            d = datetime.combine(d - timedelta(days=1), time(21, 0))
         expiry_date = st.date_input("Or choose an exact date", d)
         expiry_date = datetime.combine(expiry_date, time(21, 0))
 
