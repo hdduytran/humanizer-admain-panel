@@ -144,7 +144,8 @@ if st.session_state["authentication_status"]:
         if selected_option != "3 hours":
             d = datetime.combine(d - timedelta(days=1), time(21, 0))
         expiry_date = st.date_input("Or choose an exact date", d)
-        expiry_date = datetime.combine(expiry_date, time(21, 0))
+        if selected_option != "3 hours":
+            expiry_date = datetime.combine(expiry_date, time(21, 0))
 
         # convert datetime.date to datetime
     with cols1[1]:
