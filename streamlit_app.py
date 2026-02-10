@@ -144,14 +144,10 @@ if st.session_state["authentication_status"]:
         if selected_option != "3 hours":
             d = datetime.combine(d - timedelta(days=1), time(21, 0))
         expiry_date = st.date_input("Or choose an exact date", d)
-        if selected_option != "3 hours":
+        if selected_option == "3 hours":
+            expiry_date = datetime.combine(expiry_date, d.time())
+        else:
             expiry_date = datetime.combine(expiry_date, time(21, 0))
-        # else:
-        # convert for mongodb
-        # InvalidDocument: Invalid document: cannot encode object: datetime.date(2026, 2,10), of type: <class 'datetime.date'>
-        expiry_date = datetime(
-            expiry_date.year, expiry_date.month, expiry_date.day, expiry_date.hour, expiry_date.minute
-        )
 
 
         # convert datetime.date to datetime
