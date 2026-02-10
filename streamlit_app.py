@@ -173,7 +173,7 @@ if st.session_state["authentication_status"]:
                     user = {
                         "user_id": user_id,
                         "active": True,
-                        "sub_type": options[selected_option],
+                        "sub_type": selected_option,
                         "updated_time": datetime.now(),
                         "updated_by": st.session_state["username"],
                         "created_by": st.session_state["username"],
@@ -190,7 +190,7 @@ if st.session_state["authentication_status"]:
                     user = {
                         "user_id": user_id,
                         "active": True,
-                        "sub_type": options[selected_option],
+                        "sub_type": selected_option,
                         "created_time": datetime.now(),
                         "created_by": st.session_state["username"],
                         "updated_by": st.session_state["username"],
