@@ -28,7 +28,7 @@ COLUMNS = [
     "total_used",
     "interval_time",
     "expiry_date",
-    "num_slots",
+    "sub_type",
     "created_time",
     "created_by",
     "updated_by",
@@ -130,7 +130,7 @@ if st.session_state["authentication_status"]:
     with cols1[0]:
         options = {
             "3 hours": timedelta(hours=3),
-            "0 days (slots plan)": timedelta(days=0) + timedelta(days=0),
+            # "0 days (slots plan)": timedelta(days=0) + timedelta(days=0),
             "1 day": timedelta(days=1) +     timedelta(days=1),
             "1 week": timedelta(weeks=1) + timedelta(days=1),
             "2 weeks": timedelta(weeks=2) + timedelta(days=1),
@@ -145,6 +145,7 @@ if st.session_state["authentication_status"]:
             d = datetime.combine(d - timedelta(days=1), time(21, 0))
         expiry_date = st.date_input("Or choose an exact date", d)
         if selected_option == "3 hours":
+            print("Selected 3 hours", expiry_date, d.time())
             expiry_date = datetime.combine(expiry_date, d.time())
         else:
             expiry_date = datetime.combine(expiry_date, time(21, 0))
@@ -156,9 +157,9 @@ if st.session_state["authentication_status"]:
             "Enter interval time", min_value=10, max_value=3600, value=100, step=10
         )
         
-        num_slots = st.number_input(
-            "Enter number of slots to add", min_value=0, max_value=10000, value=1, step=1
-        )
+        # num_slots = st.number_input(
+        #     "Enter number of slots to add", min_value=0, max_value=10000, value=1, step=1
+        # )
 
     user_ids = user_ids.split(" ")
 
@@ -172,10 +173,11 @@ if st.session_state["authentication_status"]:
                     user = {
                         "user_id": user_id,
                         "active": True,
+                        "sub_type": options[selected_option],
                         "updated_time": datetime.now(),
                         "updated_by": st.session_state["username"],
                         "created_by": st.session_state["username"],
-                        "num_slots": num_slots,
+                        # "num_slots": num_slots,
                         "expiry_date": expiry_date,
                         "interval_time": interval_time,
                     }
@@ -188,10 +190,11 @@ if st.session_state["authentication_status"]:
                     user = {
                         "user_id": user_id,
                         "active": True,
+                        "sub_type": options[selected_option],
                         "created_time": datetime.now(),
                         "created_by": st.session_state["username"],
                         "updated_by": st.session_state["username"],
-                        "num_slots": num_slots,
+                        # "num_slots": num_slots,
                         "updated_time": datetime.now(),
                         "expiry_date": expiry_date,
                         "interval_time": interval_time,
@@ -206,7 +209,7 @@ if st.session_state["authentication_status"]:
                 user = {
                     "interval_time": interval_time,
                     "updated_time": datetime.now(),
-                    "num_slots": num_slots,
+                    # "num_slots": num_slots,
                     "updated_by": st.session_state["username"],
                 }
                 update_user(user_id, user)
